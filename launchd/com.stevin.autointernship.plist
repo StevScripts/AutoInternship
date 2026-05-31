@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+
+  <key>Label</key>
+  <string>com.stevin.autointernship</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/stevin/Documents/Projects/StevinInternshipAssistant/scraper/run.sh</string>
+  </array>
+
+  <!-- Run at 6:00 AM, 12:00 PM, and 12:00 AM -->
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict>
+      <key>Hour</key>
+      <integer>6</integer>
+      <key>Minute</key>
+      <integer>0</integer>
+    </dict>
+    <dict>
+      <key>Hour</key>
+      <integer>12</integer>
+      <key>Minute</key>
+      <integer>0</integer>
+    </dict>
+    <dict>
+      <key>Hour</key>
+      <integer>0</integer>
+      <key>Minute</key>
+      <integer>0</integer>
+    </dict>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/stevin/Documents/Projects/StevinInternshipAssistant/scraper</string>
+
+  <key>StandardOutPath</key>
+  <string>/Users/stevin/Library/Logs/autointernship/stdout.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/stevin/Library/Logs/autointernship/stderr.log</string>
+
+  <!-- Restart if the script crashes -->
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+  </dict>
+
+  <!-- Kill if running longer than 30 minutes -->
+  <key>ExitTimeOut</key>
+  <integer>1800</integer>
+
+  <key>AbandonProcessGroup</key>
+  <false/>
+
+</dict>
+</plist>
