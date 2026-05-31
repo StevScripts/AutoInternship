@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+
+  <key>Label</key>
+  <string>com.stevin.autointernship.submit</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/anaconda3/bin/python3</string>
+    <string>/Users/stevin/Documents/Projects/StevinInternshipAssistant/scraper/submit_server.py</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PYTHONPATH</key>
+    <string>/Users/stevin/Documents/Projects/StevinInternshipAssistant/scraper</string>
+  </dict>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/stevin/Documents/Projects/StevinInternshipAssistant/scraper</string>
+
+  <key>StandardOutPath</key>
+  <string>/Users/stevin/Library/Logs/autointernship/submit-stdout.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/stevin/Library/Logs/autointernship/submit-stderr.log</string>
+
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+</dict>
+</plist>
