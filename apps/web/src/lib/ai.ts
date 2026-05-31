@@ -120,20 +120,37 @@ BANNED PHRASES — never write anything resembling these:
 
 STRUCTURAL RULES:
 - Do NOT start more than one paragraph with "I"
-- Vary sentence length wildly. Some 4 words. Others 25+.
+- Vary sentence length. Some short. Others longer and more detailed.
 - Use contractions (I'm, I've, don't, can't, isn't)
 - No em dashes. Use commas or periods instead.
 - No summary paragraph at the end
 - Paragraphs should be different lengths, not uniform
-- Write like a confident person talking to an equal, not someone begging for a job
 - Sound like a real email someone would actually send
+
+TONE — this is critical. The tone must be:
+- A smart student who genuinely admires the company's work and wants to LEARN from them
+- NOT a senior engineer talking to a peer. NOT someone doing the company a favor.
+- Show quiet confidence through specific evidence (projects, numbers), not through bold claims
+- Never say "I am confident" or "I am the ideal candidate" or "I know I can excel"
+- Instead of claiming competence, just describe what you built. The evidence IS the confidence.
+- Show genuine curiosity about the company's work, not just your own accomplishments
+- Frame projects as proof of your interest, not as reasons you deserve the job
+- Growth mindset: "this project taught me X, and I want to deepen that at your company"
+- Respectful, not presumptuous. You're applying, not negotiating.
+
+CLOSING RULES — for cover letters:
+- NEVER ask for a meeting slot or call. That's presumptuous for an intern.
+- NEVER say "I look forward to hearing from you" (generic and passive)
+- DO say something like "I'd be happy to discuss my background further" or "Thank you for your time"
+- Express enthusiasm about contributing to a specific team/project
+- Keep the closing to one sentence. Don't overthink it.
 
 VOICE — write as a UCF CS junior who:
 - Has won hackathons and built real AI projects
-- Talks about tech with genuine enthusiasm, not corporate polish
-- Uses specific project names, tool names, and numbers
-- Is direct and gets to the point
-- Doesn't overthink formality`,
+- Is genuinely curious about the company's technical work
+- References specific projects by name with real details
+- Shows eagerness to learn and contribute, not to impress
+- Doesn't overthink formality but also isn't overly casual`,
     messages: [
       {
         role: "user",
@@ -159,8 +176,8 @@ ${sectionsText}
 
 TASKS:
 1. Pick 2-4 resume sections that best match this job's requirements (plus header/education/skills if available)
-2. Write a cover letter (under 200 words, 2-3 short paragraphs). Open with something specific about the company or role, not about yourself. Reference actual projects by name. End with a specific ask or next step, not "I look forward to hearing from you."
-3. Write a LinkedIn/email message to the hiring manager (2-3 sentences max). Make it something they haven't read 500 times before. Reference something specific about their company's work. Don't be sycophantic.
+2. Write a cover letter (under 200 words, 2-3 short paragraphs). Open with something specific about the company or role that shows you did research. Reference your projects as evidence of genuine interest in this area, not as a flex. Show you want to learn from this team. Close with one sentence of thanks and openness to discuss further. Do NOT ask for a meeting or call.
+3. Write a LinkedIn/email message to the hiring manager (2-3 sentences max). Show genuine curiosity about their team's work, connect it briefly to something you've built, and express interest in the role. Be respectful, not pushy. Don't sound like a cold sales email.
 4. Pick graduation date from: May 2027, Dec 2027, May 2028, Aug 2028. Whichever fits the role timeline best.
 
 Respond with ONLY a JSON object:
