@@ -7,6 +7,14 @@ DATABASE_URL = os.environ["DATABASE_URL"]
 API_URL = os.environ.get("AUTOINTERNSHIP_API_URL", "http://localhost:3000")
 API_KEY = os.environ["AUTOINTERNSHIP_API_KEY"]
 SERPER_API_KEY = os.environ.get("SERPER_API_KEY", "")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
+# Resume PDF path (compiled from LaTeX)
+RESUME_PDF_PATH = os.path.join(os.path.dirname(__file__), "..", "resume.pdf")
+
+# Screenshot output directory
+SCREENSHOTS_DIR = os.path.join(os.path.dirname(__file__), "..", "screenshots")
+os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
 
 # Search configuration
 SEARCH_TERMS = [

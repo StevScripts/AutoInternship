@@ -78,27 +78,56 @@ def mark_submitted(application_id: str):
         print(f"[Watcher] Failed to mark {application_id} as submitted: {e}")
 
 
+def mark_failed(application_id: str, error: str):
+    """Update application status to 'submission_failed'."""
+    try:
+        httpx.patch(
+            f"{API_URL}/api/applications/{application_id}",
+            headers={
+                "Authorization": f"Bearer {API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={"status": "submission_failed", "submissionError": error},
+            timeout=10,
+        )
+    except Exception as e:
+        print(f"[Watcher] Failed to mark {application_id} as failed: {e}")
+
+
 def process_application(app_data: dict):
-    """Submit a single application via NoDriver."""
+    """Fill out and submit a single application via SeleniumBase + Playwright."""
     application = app_data.get("application", {})
     job = app_data.get("job", {})
     application_id = application.get("id")
 
-    print(f"[Watcher] Submitting: {job.get('title', '?')} @ {job.get('company', '?')}")
+    title = job.get("title", "?")
+    company = job.get("company", "?")
+    print(f"[Watcher] Processing: {title} @ {company}")
 
     mark_submitting(application_id)
 
-    # TODO: Phase 5 — NoDriver form fill + submit here
     from submitters.generic_submitter import submit_application
-    result = submit_application({"application_id": application_id, "job": job, "application": application})
+    result = submit_application({
+        "application_id": application_id,
+        "job": job,
+        "application": application,
+    })
 
-    if result.get("status") == "not_implemented":
-        print(f"[Watcher] NoDriver submission not yet implemented. Marking as submitted for now.")
+    status = result.get("status", "error")
+
+    if status == "filled":
+        filled = result.get("fields_filled", 0)
+        print(f"[Watcher] Filled {filled} fields for {title} @ {company}")
         mark_submitted(application_id)
+    elif status == "error":
+        error = result.get("error", "unknown")
+        print(f"[Watcher] Failed: {title} @ {company} — {error}")
+        mark_failed(application_id, error)
     else:
+        print(f"[Watcher] Unexpected status '{status}' for {title} @ {company}")
         mark_submitted(application_id)
 
-    print(f"[Watcher] Done: {job.get('title', '?')} @ {job.get('company', '?')}")
+    print(f"[Watcher] Done: {title} @ {company}")
 
 
 def main():

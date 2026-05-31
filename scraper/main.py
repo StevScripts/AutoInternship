@@ -12,7 +12,7 @@ import time
 import socket
 from datetime import datetime
 
-from scrapers import jobspy_scraper, serper_scraper, workday_scraper
+from scrapers import jobspy_scraper, serper_scraper, workday_scraper, nodriver_scraper
 from notify import trigger_scoring, trigger_content_generation, trigger_discord_notification
 
 
@@ -54,6 +54,7 @@ def main():
         ("JobSpy", jobspy_scraper.run),
         ("Serper", serper_scraper.run),
         ("Workday", workday_scraper.run),
+        ("Stealth Browser (Google + Handshake)", nodriver_scraper.run),
     ]
 
     for name, scraper_fn in scrapers:
