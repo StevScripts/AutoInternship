@@ -20,23 +20,29 @@ export async function POST(request: NextRequest) {
   const profile = profiles[0];
 
   // Get unscored jobs
-  const unscoredJobs = await db
-    .select()
-    .from(jobs)
-    .where(eq(jobs.status, "scraped"))
-    .limit(50);
+  let unscoredJobs;
+  try {
+    unscoredJobs = await db
+      .select()
+      .from(jobs)
+      .where(eq(jobs.status, "scraped"))
+      .limit(10);
+  } catch (err) {
+    console.error("Failed to fetch unscored jobs:", err);
+    return NextResponse.json({ error: "DB query failed", detail: String(err) }, { status: 500 });
+  }
 
   if (unscoredJobs.length === 0) {
-    return NextResponse.json({ scored: 0, matched: 0, skipped: 0 });
+    return NextResponse.json({ scored: 0, matched: 0, skipped: 0, debug: "no unscored jobs found" });
   }
 
   let scored = 0;
   let matched = 0;
   let skipped = 0;
 
-  // Process in batches of 8
-  for (let i = 0; i < unscoredJobs.length; i += 8) {
-    const batch = unscoredJobs.slice(i, i + 8);
+  // Process in batches of 5
+  for (let i = 0; i < unscoredJobs.length; i += 5) {
+    const batch = unscoredJobs.slice(i, i + 5);
 
     try {
       const scores = await scoreJobs(batch, profile);
@@ -63,6 +69,7 @@ export async function POST(request: NextRequest) {
       }
     } catch (err) {
       console.error("Scoring batch failed:", err);
+      return NextResponse.json({ scored, matched, skipped, error: String(err), batchIndex: i });
     }
   }
 
