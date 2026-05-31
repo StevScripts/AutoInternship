@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 360px;
+      max-height: 500px;
+      overflow-y: auto;
+      background: oklch(0.13 0.008 240);
+      color: oklch(0.93 0.005 240);
+      font-family: "Inter", -apple-system, system-ui, sans-serif;
+      font-size: 13px;
+      padding: 16px;
+    }
+    h1 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      font-size: 11px;
+      color: oklch(0.65 0.005 240);
+      font-family: monospace;
+      margin-bottom: 16px;
+    }
+    .field { margin-bottom: 10px; }
+    label {
+      display: block;
+      font-size: 10px;
+      color: oklch(0.65 0.005 240);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+      font-family: monospace;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 6px 8px;
+      background: oklch(0.22 0.007 240);
+      border: 1px solid oklch(0.28 0.006 240);
+      border-radius: 6px;
+      color: oklch(0.93 0.005 240);
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+    }
+    input:focus, textarea:focus {
+      border-color: oklch(0.72 0.18 165);
+    }
+    textarea { resize: vertical; min-height: 40px; }
+    button {
+      width: 100%;
+      padding: 8px;
+      background: oklch(0.72 0.18 165);
+      color: oklch(0.13 0.008 240);
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    button:hover { background: oklch(0.78 0.16 165); }
+    .status {
+      font-size: 11px;
+      color: oklch(0.72 0.17 155);
+      margin-top: 6px;
+      font-family: monospace;
+      text-align: center;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid oklch(0.22 0.007 240);
+      margin: 12px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>AutoInternship</h1>
+  <div class="subtitle">Chrome Extension v1.0</div>
+
+  <div class="field">
+    <label>Anthropic API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-...">
+  </div>
+
+  <hr>
+
+  <div class="field"><label>Full Name</label><input type="text" id="fullName"></div>
+  <div class="field"><label>Email</label><input type="text" id="email"></div>
+  <div class="field"><label>Phone</label><input type="text" id="phone"></div>
+  <div class="field"><label>LinkedIn URL</label><input type="text" id="linkedin"></div>
+  <div class="field"><label>GitHub URL</label><input type="text" id="github"></div>
+  <div class="field"><label>Portfolio URL</label><input type="text" id="portfolio"></div>
+  <div class="field"><label>University</label><input type="text" id="university"></div>
+  <div class="field"><label>Degree</label><input type="text" id="degree"></div>
+  <div class="field"><label>Graduation Date</label><input type="text" id="graduationDate"></div>
+  <div class="field"><label>GPA</label><input type="text" id="gpa"></div>
+  <div class="field">
+    <label>Skills (comma separated)</label>
+    <textarea id="skills" rows="3"></textarea>
+  </div>
+
+  <button id="saveBtn">Save Profile</button>
+  <div id="status" class="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
