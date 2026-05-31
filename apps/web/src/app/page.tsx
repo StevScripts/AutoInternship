@@ -1,65 +1,142 @@
-import Image from "next/image";
+import { db } from "@/lib/db";
+import { jobs, applications } from "@/lib/schema";
+import { eq, desc } from "drizzle-orm";
+import { StatsBar } from "@/components/stats-bar";
+import { JobCard } from "@/components/job-card";
+import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+async function getStats() {
+  try {
+    const res = await fetch(
+      `${process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000"}/api/dashboard/stats`,
+      { cache: "no-store" }
+    );
+    return res.json();
+  } catch {
+    return {
+      totalJobs: 0,
+      todayJobs: 0,
+      matchedToday: 0,
+      pendingApproval: 0,
+      submittedToday: 0,
+      totalApplied: 0,
+      lastScrapeRun: null,
+    };
+  }
+}
+
+export default async function DashboardPage() {
+  const stats = await getStats();
+
+  // Get pending applications with their jobs
+  const pendingApps = await db
+    .select({ application: applications, job: jobs })
+    .from(applications)
+    .innerJoin(jobs, eq(applications.jobId, jobs.id))
+    .where(eq(applications.status, "awaiting_approval"))
+    .orderBy(desc(jobs.matchScore))
+    .limit(20)
+    .catch(() => []);
+
+  // Get recently applied
+  const recentApplied = await db
+    .select({ application: applications, job: jobs })
+    .from(applications)
+    .innerJoin(jobs, eq(applications.jobId, jobs.id))
+    .where(eq(applications.status, "submitted"))
+    .orderBy(desc(applications.submittedAt))
+    .limit(10)
+    .catch(() => []);
+
+  // Get latest matched jobs
+  const latestJobs = await db
+    .select()
+    .from(jobs)
+    .where(eq(jobs.status, "matched"))
+    .orderBy(desc(jobs.createdAt))
+    .limit(20)
+    .catch(() => []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="flex-1 w-full max-w-[1200px] mx-auto p-4 space-y-6">
+      <StatsBar stats={stats} />
+
+      <Separator />
+
+      {/* Needs Your Approval */}
+      <section className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold">Needs Your Approval</h3>
+          {pendingApps.length > 0 && (
+            <span className="text-xs font-mono text-primary">
+              {pendingApps.length} pending
+            </span>
+          )}
+        </div>
+        {pendingApps.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4">
+            No applications waiting for approval. Check back after the next
+            scrape run.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        ) : (
+          <div className="space-y-1">
+            {pendingApps.map(({ application, job }) => (
+              <JobCard
+                key={application.id}
+                job={job}
+                applicationId={application.id}
+                applicationStatus={application.status}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <Separator />
+
+      {/* Applied Today */}
+      {recentApplied.length > 0 && (
+        <section className="space-y-2">
+          <h3 className="text-base font-semibold">Recently Applied</h3>
+          <div className="space-y-1">
+            {recentApplied.map(({ application, job }) => (
+              <JobCard
+                key={application.id}
+                job={job}
+                applicationId={application.id}
+                applicationStatus={application.status}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* All Matched Jobs */}
+      <section className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold">Matched Jobs</h3>
+          <Link
+            href="/jobs"
+            className="text-xs text-primary hover:underline font-mono"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            View all
+          </Link>
         </div>
-      </main>
-    </div>
+        {latestJobs.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4">
+            No matched jobs yet. The scraper will find them for you.
+          </p>
+        ) : (
+          <div className="space-y-1">
+            {latestJobs.map((job) => (
+              <JobCard key={job.id} job={job} />
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
   );
 }
