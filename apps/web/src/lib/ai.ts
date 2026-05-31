@@ -100,10 +100,44 @@ export async function generateApplicationContent(
   const message = await client.messages.create({
     model: MODEL,
     max_tokens: 3000,
+    system: `You write cover letters and recruiter messages that sound like a real college student wrote them, not an AI.
+
+BANNED WORDS — never use any of these:
+delve, leverage, utilize, harness, streamline, underscore, foster, navigate, bolster, showcase, facilitate, spearhead, empower, optimize, unleash, unlock, elevate, illuminate, pivotal, robust, innovative, seamless, cutting-edge, multifaceted, groundbreaking, transformative, holistic, crucial, dynamic, comprehensive, noteworthy, remarkable, invaluable, landscape, realm, tapestry, synergy, paradigm, beacon, cornerstone, catalyst, nexus, furthermore, moreover, consequently, passionate, self-starter, results-driven, detail-oriented, proven track record
+
+BANNED PHRASES — never write anything resembling these:
+- "I am writing to express my interest..."
+- "I believe I would be a great fit..."
+- "I am excited to apply for..."
+- "I am passionate about..."
+- "With my proven track record..."
+- "I would welcome the opportunity..."
+- "I am confident that my skills..."
+- "Thank you for considering my application"
+- "In today's rapidly evolving..."
+- "Not only X, but also Y"
+- Any "rule of three" adjective lists (e.g., "innovative, transformative, and groundbreaking")
+
+STRUCTURAL RULES:
+- Do NOT start more than one paragraph with "I"
+- Vary sentence length wildly. Some 4 words. Others 25+.
+- Use contractions (I'm, I've, don't, can't, isn't)
+- No em dashes. Use commas or periods instead.
+- No summary paragraph at the end
+- Paragraphs should be different lengths, not uniform
+- Write like a confident person talking to an equal, not someone begging for a job
+- Sound like a real email someone would actually send
+
+VOICE — write as a UCF CS junior who:
+- Has won hackathons and built real AI projects
+- Talks about tech with genuine enthusiasm, not corporate polish
+- Uses specific project names, tool names, and numbers
+- Is direct and gets to the point
+- Doesn't overthink formality`,
     messages: [
       {
         role: "user",
-        content: `You are preparing an internship application for a candidate. Generate tailored content for this specific job.
+        content: `Write application content for this specific job. Every sentence must contain something specific to THIS role or THIS company that couldn't appear in any other cover letter.
 
 JOB:
 - Title: ${job.title}
@@ -111,23 +145,23 @@ JOB:
 - Location: ${job.location || "Not specified"}
 - Description: ${(job.descriptionRaw || "").slice(0, 2000)}
 
-CANDIDATE:
+MY BACKGROUND:
 - Name: ${profile.fullName}
-- University: ${profile.university}, ${profile.degree}
-- Default Graduation: ${profile.graduationDate}
+- School: ${profile.university}, ${profile.degree}
+- Graduating: ${profile.graduationDate}
 - Skills: ${profile.skills.join(", ")}
 - GitHub: ${profile.githubUrl}
 - LinkedIn: ${profile.linkedinUrl}
 - Portfolio: ${profile.portfolioUrl}
 
-AVAILABLE RESUME SECTIONS (pick the best combination):
+RESUME SECTIONS (pick the best ones for this job):
 ${sectionsText}
 
-INSTRUCTIONS:
-1. Select the best resume sections for this job (2-4 experience/project sections + always include header, education, and skills sections if available)
-2. Write a concise, human-sounding cover letter (3 short paragraphs max). Do NOT use generic phrases like "I am writing to express my interest" or "I believe I would be a great fit". Be specific about why this company and role.
-3. Write a personalized LinkedIn/email message to the hiring manager (2-3 sentences, eye-catching, shows you researched the company). Do NOT be generic.
-4. Pick the optimal graduation date for this role. The candidate can graduate May 2027, Dec 2027, May 2028, or Aug 2028. Pick whichever best matches the role's requirements.
+TASKS:
+1. Pick 2-4 resume sections that best match this job's requirements (plus header/education/skills if available)
+2. Write a cover letter (under 200 words, 2-3 short paragraphs). Open with something specific about the company or role, not about yourself. Reference actual projects by name. End with a specific ask or next step, not "I look forward to hearing from you."
+3. Write a LinkedIn/email message to the hiring manager (2-3 sentences max). Make it something they haven't read 500 times before. Reference something specific about their company's work. Don't be sycophantic.
+4. Pick graduation date from: May 2027, Dec 2027, May 2028, Aug 2028. Whichever fits the role timeline best.
 
 Respond with ONLY a JSON object:
 {
