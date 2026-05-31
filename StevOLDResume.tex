@@ -1,0 +1,193 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{xcolor}
+
+\input{glyphtounicode}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.25in}
+\addtolength{\topmargin}{-.75in}
+\addtolength{\textheight}{1.5in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-10pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-7pt}]
+
+\pdfgentounicode=1
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\normalsize{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-5pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-10pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-2pt}}
+
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-10pt}}
+
+%-------------------------------------------
+%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+%----------HEADING----------
+\begin{center}
+
+
+    \textbf{\Huge \scshape Stevin George} \\ \vspace{1pt}
+    \small 407-257-0293 $|$ \href{mailto:steving2006@gmail.com}{steving2006@gmail.com} $|$ 
+    \href{https://linkedin.com/in/georgestevin}{linkedin.com/in/georgestevin} $|$
+    \href{https://github.com/StevScripts}{https://github.com/StevScripts}
+\end{center}
+
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {University of Central Florida}{Orlando, FL}
+      {B.S. in Computer Science}{May 2028}
+    \resumeItem{\textbf{Relevant Coursework:} Computer Science 2, Security in Computing, Object Oriented Programming      
+      \textbf{ Organizations}: Knight Hacks (Outreach Member), EXCEL, ACM, Robotics Club (RCCF), GPK}
+    \space
+  \resumeSubHeadingListEnd
+
+
+%-----------TECHNICAL SKILLS-----------
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \normalsize{\item{
+     \textbf{Languages}{: Java, Python, SQL, TypeScript, JavaScript, Lua, C, HTML/CSS} \\
+     \textbf{Frameworks \& Libraries}{: Spring Boot, Flask, Next.js, React, React Native, Node.js, Prisma, Tailwind CSS} \\
+     \textbf{Cloud \& DevOps}{: AWS (S3, CloudFront), Docker, Agile, CI/CD, PostgreSQL, Vercel, Git} \\
+    }}
+ \end{itemize}
+
+
+%-----------EXPERIENCE-----------
+\section{Relevant Experience}
+  \resumeSubHeadingListStart
+
+\resumeSubheading                           
+    {Software Engineering Intern}{May 2026 -- August 2026}
+    {PETE Learning}{Orlando, FL}
+    \resumeItemListStart                                                                                                                                       
+      \resumeItem{Incoming, Working on automations Using N8N automated with coding, programatically makign the automations, building an intelligence corpus for the company, alot of internal tools.}
+      
+    \resumeItemListEnd                                                                                                                                                                                                                              
+                         
+  
+ \resumeSubheading                           
+    {Software Engineer Intern}{Jan. 2026 -- May 2026}
+    {Graphics Programming Knights}{Orlando, FL}
+    \resumeItemListStart                                                                                                                                                                                                                            
+    \resumeItem{Building a club website with \textbf{Next.js} and \textbf{TypeScript} to showcase member projects, gallery posts, and club events for an active student organization.}                                                              
+    \resumeItem{Developing a responsive, mobile-first interface using \textbf{Tailwind CSS} and \textbf{Shadcn UI} components, ensuring consistent design and accessibility across all screen sizes.}                                               
+    \resumeItem{Designing the site architecture and data models to integrate with a \textbf{PostgreSQL} backend, enabling dynamic rendering of member-submitted projects and event information.}                                                    
+  \resumeItemListEnd 
+        
+
+%     \resumeSubheading
+%       {Software Engineer}{Jan. 2026 -- present}
+%       {Society of Asian Scientists and Engineers}{Orlando, FL}
+%       \resumeItemListStart
+%         \resumeItem{Engineered a {Progressive Web App} using \textbf{Next.js} and \textbf{TailwindCSS} to streamline member attendance tracking and event check-ins.}
+%         \resumeItem{Developed asynchronous \textbf{RESTful API} routes to manage real-time data synchronization between the \textbf{React} frontend and a backend database, reducing manual entry errors.}
+% \resumeItem{Implemented service workers and manifest configurations to enable \textbf{offline functionality} and a native-like "add-to-home-screen" experience for mobile users.}
+%       \resumeItemListEnd
+
+
+  \resumeSubHeadingListEnd
+
+
+%-----------PROJECTS-----------
+\section{Projects}
+  \resumeSubHeadingListStart
+ \resumeProjectHeading
+  {\textbf{Recall} $|$ \emph{Python, Gemini 2.5 Flash, YOLOv8, ChromaDB, ElevenLabs, ESP32, Next.js}}{Mar. 2026}
+  \resumeItemListStart
+    \resumeItem{Won \textbf{2nd Place} out of 85+ projects at \textbf{HackUSF 2026} by building a \textbf{wearable AI memory assistant} that passively captures a user's environment and enables instant natural language queries}
+ \resumeItem{Designed a computer vision pipeline using \textbf{OpenCV} and \textbf{YOLOv8 Nano} to filter video frames, sending scenes to \textbf{Gemini 2.5} Flash Vision to generate detailed spatial descriptions of the user's environment.}
+\resumeItem{Indexed scene descriptions in \textbf{SQLite} and \textbf{ChromaDB} vector embeddings for semantic search, surfaced through a \textbf{Flask} API with a live memory timeline and \textbf{ElevenLabs TTS} conversational chat.}
+\resumeItemListEnd
+  
+    \resumeProjectHeading
+  {\textbf{TideSense} $|$ \emph{React Native, TypeScript, Python, TensorFlow Lite}}{Nov. 2025}
+  \resumeItemListStart
+    \resumeItem{Engineered a \textbf{full-stack AI mobile application} that utilizes computer vision to identify and classify dangerous riptide currents via a smartphone camera.}
+    \resumeItem{Implemented \textbf{TensorFlow Lite} for on-device object detection, developing a custom post-processing algorithm to filter model noise and improve detection stability.}
+    \resumeItem{Integrated the \textbf{Gemini API} to provide contextual safety advice and utilized the \textbf{ElevenLabs API} to generate real-time audio risk assessments for users.}
+  \resumeItemListEnd
+
+
+  
+\resumeProjectHeading
+  {\textbf{Next Step} $|$ \emph{Next.js, React, TypeScript, Python, Flask}}{Sep. 2025}
+  \resumeItemListStart
+    \resumeItem{\textbf{3rd Place Winner} (State Farm Challenge) out of 50+ projects at \textbf{ShellHacks 2025} for an AI-driven insurance education platform.}
+    \resumeItem{Developed interactive, voice-based simulations using \textbf{Vapi AI} to teach insurance fundamentals through real-time, decision-based scenarios.}
+    \resumeItem{Built a scoring system to evaluate user safety and knowledge retention, providing immediate feedback based on simulated insurance claims and coverage choices.}
+  \resumeItemListEnd
+
+  \resumeSubHeadingListEnd
+
+
+
+
+\vspace{1.5pt}
+
+\end{document}
