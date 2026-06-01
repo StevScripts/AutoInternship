@@ -268,11 +268,28 @@ def fill_field(page, selector, value, field_type):
                 except Exception:
                     return False
 
-        el.click()
-        el.fill("")
-        human_typing_delay()
-        el.fill(value)
-        human_typing_delay()
+        # Try click-then-fill first, fall back to JS-based fill if overlay blocks
+        try:
+            el.click(timeout=3000)
+            el.fill("")
+            human_typing_delay()
+            el.fill(value)
+            human_typing_delay()
+        except Exception:
+            # Overlay blocking clicks — use JavaScript to set value directly
+            el.evaluate(f"""(el) => {{
+                const nativeSetter = Object.getOwnPropertyDescriptor(
+                    el.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype,
+                    'value'
+                )?.set;
+                if (nativeSetter) nativeSetter.call(el, {json.dumps(value)});
+                else el.value = {json.dumps(value)};
+                el.dispatchEvent(new Event('input', {{bubbles: true}}));
+                el.dispatchEvent(new Event('change', {{bubbles: true}}));
+                el.dispatchEvent(new Event('blur', {{bubbles: true}}));
+            }}""")
+            human_typing_delay()
+
         el.evaluate("el => { el.dispatchEvent(new Event('change', {bubbles: true})); el.dispatchEvent(new Event('blur', {bubbles: true})); }")
         return True
     except Exception as e:
@@ -406,6 +423,28 @@ def main():
             seen_pages.add(page_key)
 
             print(f"\n--- Step {step} ---")
+
+            # Dismiss any modal overlays or error popups
+            try:
+                page.evaluate("""() => {
+                    // Close common modal overlays
+                    const closeSelectors = [
+                        '[data-behavior-click-outside-close]',
+                        'button[aria-label="Close"]',
+                        'button.close',
+                        '[class*="modal-close"]',
+                        '[class*="dialog-close"]',
+                    ];
+                    for (const sel of closeSelectors) {
+                        const btn = document.querySelector(sel + ' button, ' + sel);
+                        if (btn && btn.offsetParent !== null) btn.click();
+                    }
+                    // Also try pressing Escape
+                    document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));
+                }""")
+                page.wait_for_timeout(500)
+            except Exception:
+                pass
 
             # Take a step screenshot
             step_screenshot = os.path.join(os.path.dirname(__file__), "..", "screenshots", f"step-{step}.png")
