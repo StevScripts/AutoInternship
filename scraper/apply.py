@@ -71,8 +71,27 @@ DEFAULT_PASSWORD = "Stevinismyname14!"
 
 
 def extract_fields(page):
-    """Extract visible form fields from the page."""
-    return page.evaluate("""() => {
+    """Extract visible form fields from the page, including inside iframes and modals."""
+
+    # First check for iframes (many ATS platforms load forms in iframes)
+    try:
+        iframes = page.frames
+        for frame in iframes:
+            if frame == page.main_frame:
+                continue
+            frame_fields = _extract_fields_from_context(frame)
+            if len(frame_fields) > 0:
+                print(f"  Found {len(frame_fields)} fields inside iframe")
+                return frame_fields
+    except Exception:
+        pass
+
+    return _extract_fields_from_context(page)
+
+
+def _extract_fields_from_context(ctx):
+    """Extract form fields from a page or frame context."""
+    return ctx.evaluate("""() => {
         const fields = [];
         const inputs = document.querySelectorAll(
             'input[type="text"], input[type="email"], input[type="tel"], ' +
@@ -272,16 +291,34 @@ def main():
 
         # Click "Apply" button if we're on a job listing page (not already on form)
         try:
-            apply_btn = page.locator('a:has-text("Apply"), button:has-text("Apply")').first
+            apply_btn = page.locator(
+                'a:has-text("Apply Now"), button:has-text("Apply Now"), '
+                'a:has-text("Apply"), button:has-text("Apply"), '
+                'a:has-text("Quick Apply"), button:has-text("Quick Apply"), '
+                'a:has-text("Easy Apply"), button:has-text("Easy Apply")'
+            ).first
             if apply_btn.is_visible(timeout=3000):
                 print("  Found Apply button, clicking...")
                 human_delay(1.0, 3.0)
                 apply_btn.click()
                 page_load_delay()
 
-                # Workday sometimes asks "Sign In" or "Apply Manually" — click the right one
+                # Wait for modal/popup/new page to load
+                page.wait_for_timeout(3000)
+
+                # Check if a new tab/popup opened
+                if len(browser.contexts[0].pages) > 1:
+                    page = browser.contexts[0].pages[-1]  # Switch to newest tab
+                    print("  Switched to new tab")
+                    page_load_delay()
+
+                # Workday sometimes asks "Sign In" or "Apply Manually"
                 try:
-                    manual_btn = page.locator('a:has-text("Apply Manually"), button:has-text("Apply Manually"), a:has-text("Apply with your resume")').first
+                    manual_btn = page.locator(
+                        'a:has-text("Apply Manually"), button:has-text("Apply Manually"), '
+                        'a:has-text("Apply with your resume"), button:has-text("Apply with your resume"), '
+                        'a:has-text("Upload Resume"), button:has-text("Upload Resume")'
+                    ).first
                     if manual_btn.is_visible(timeout=3000):
                         human_delay()
                         manual_btn.click()
@@ -314,9 +351,28 @@ def main():
             print(f"  Found {len(fields)} fields")
 
             if not fields:
+                # Try scrolling down to trigger lazy-loaded forms
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight / 2)")
                 page_load_delay()
                 fields = extract_fields(page)
-                print(f"  Retry: {len(fields)} fields")
+                print(f"  Retry after scroll: {len(fields)} fields")
+
+            if not fields:
+                # Check for "Apply" buttons we may have missed (modals, etc.)
+                try:
+                    apply_again = page.locator(
+                        'button:has-text("Apply"), a:has-text("Apply"), '
+                        'button:has-text("Start Application"), a:has-text("Start Application")'
+                    ).first
+                    if apply_again.is_visible(timeout=2000):
+                        print("  Found another Apply button, clicking...")
+                        human_delay()
+                        apply_again.click()
+                        page_load_delay()
+                        fields = extract_fields(page)
+                        print(f"  After second click: {len(fields)} fields")
+                except Exception:
+                    pass
 
             if not fields:
                 print("  No fields on this page. Checking for navigation...")
