@@ -458,15 +458,15 @@ def main():
         print("Review the filled fields, then submit manually.")
         print(f"{'='*60}\n")
 
-        # Keep browser open — wait for user input or timeout
+        # Keep browser open indefinitely — user closes it manually
+        print("Browser will stay open. Close it manually when done.")
         try:
-            input("Press Enter to close the browser...")
+            input("Or press Enter here to close...")
         except EOFError:
-            # Running non-interactively, keep open for 120 seconds
-            print("Non-interactive mode. Browser stays open for 120 seconds.")
-            time.sleep(120)
+            # Running non-interactively — just leave it open, don't kill
+            print("Browser left open. Close Chrome manually when done.")
 
-    sb.driver.stop()
+    # Don't call sb.driver.stop() — leave the browser running
 
 
 if __name__ == "__main__":
