@@ -158,6 +158,48 @@ def extract_job_description(page):
     }""")
 
 
+def ask_claude_whats_on_screen(page, url, context=""):
+    """Take a screenshot and ask Claude what to do next."""
+    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    import base64
+
+    # Take screenshot
+    screenshot_bytes = page.screenshot(type="png")
+    b64 = base64.b64encode(screenshot_bytes).decode()
+
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=500,
+        messages=[{
+            "role": "user",
+            "content": [
+                {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": b64}},
+                {"type": "text", "text": f"""I'm automating a job application at {url}. {context}
+
+Look at this screenshot and tell me what to do next. Respond with ONLY a JSON object:
+{{
+  "action": "click" | "fill" | "done" | "stuck",
+  "target": "CSS selector or button text to click",
+  "value": "text to type if filling a field",
+  "explanation": "brief explanation"
+}}
+
+If there's a sign-in form, use email steving2006@gmail.com and password Stevinismyname14!
+If there's a Create Account vs Sign In choice, prefer Sign In (account may exist).
+If there's a form to fill, describe the most important field to fill.
+If the page looks like a completed application or review page, say "done".
+If you truly can't figure it out, say "stuck"."""}
+            ],
+        }],
+    )
+
+    text = response.content[0].text if response.content[0].type == "text" else ""
+    match = re.search(r"\{[\s\S]*\}", text)
+    if match:
+        return json.loads(match.group())
+    return {"action": "stuck", "explanation": "Could not parse Claude response"}
+
+
 def ask_claude(fields, job_description, url):
     """Ask Claude to fill the form fields."""
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
@@ -332,12 +374,36 @@ def main():
 
         # Workday multi-step handler
         step = 0
-        max_steps = 8  # Safety limit
+        max_steps = 10  # Safety limit
+        seen_pages = set()  # Track page states to detect loops
 
         while step < max_steps:
             step += 1
             current_url = page.url
-            page_text = page.text_content("body")[:500] if page.locator("body").count() > 0 else ""
+
+            # Detect loops — if we've seen this exact URL + page title before, we're stuck
+            try:
+                page_title = page.title()
+            except Exception:
+                page_title = ""
+            page_key = f"{current_url}|{page_title}"
+            if page_key in seen_pages:
+                print(f"  Loop detected (same page seen before). Asking Claude for help...")
+                vision_result = ask_claude_whats_on_screen(page, url, "I keep landing on the same page in a loop.")
+                print(f"  Claude says: {vision_result.get('action')} — {vision_result.get('explanation', '')}")
+                if vision_result.get("action") == "click":
+                    try:
+                        target = vision_result.get("target", "")
+                        btn = page.locator(f'button:has-text("{target}"), a:has-text("{target}"), {target}').first
+                        if btn.is_visible(timeout=2000):
+                            human_delay()
+                            btn.click()
+                            page_load_delay()
+                            continue
+                    except Exception:
+                        pass
+                break
+            seen_pages.add(page_key)
 
             print(f"\n--- Step {step} ---")
 
@@ -519,14 +585,50 @@ def main():
             except Exception:
                 pass
 
-            # No next button found — we're either done or stuck
-            print("  No next/continue button. Taking final screenshot.")
+            # No obvious button — ask Claude to look at the screen
+            print("  No obvious next step. Asking Claude to look at the screen...")
+            vision_result = ask_claude_whats_on_screen(page, url, f"Step {step}, couldn't find a Next/Continue button.")
+            action = vision_result.get("action", "stuck")
+            print(f"  Claude says: {action} — {vision_result.get('explanation', '')}")
+
+            if action == "click":
+                target = vision_result.get("target", "")
+                try:
+                    btn = page.locator(f'button:has-text("{target}"), a:has-text("{target}"), {target}').first
+                    if btn.is_visible(timeout=2000):
+                        human_delay()
+                        btn.click()
+                        page_load_delay()
+                        continue
+                except Exception:
+                    pass
+
+            elif action == "fill":
+                target = vision_result.get("target", "")
+                value = vision_result.get("value", "")
+                if target and value:
+                    try:
+                        fill_field(page, target, value, "text")
+                        human_typing_delay()
+                        continue
+                    except Exception:
+                        pass
+
+            elif action == "done":
+                print("  Claude says we're done!")
+                break
+
+            # If we get here, we're stuck
+            print("  Stuck. Leaving browser open for manual intervention.")
             break
 
         # Final screenshot
-        final_screenshot = os.path.join(os.path.dirname(__file__), "..", "screenshots", "quick-apply-final.png")
-        page.screenshot(path=final_screenshot, full_page=True)
-        print(f"\n  Final screenshot: {final_screenshot}")
+        try:
+            final_screenshot = os.path.join(os.path.dirname(__file__), "..", "screenshots", "quick-apply-final.png")
+            page.screenshot(path=final_screenshot, full_page=True)
+            print(f"\n  Final screenshot: {final_screenshot}")
+        except Exception:
+            print("\n  Could not take final screenshot (page may have closed)")
 
         print(f"\n{'='*60}")
         print("DONE! Browser is still open.")
