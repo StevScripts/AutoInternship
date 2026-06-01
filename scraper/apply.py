@@ -582,36 +582,44 @@ def main():
             except Exception:
                 pass
 
-            # Check for Create Account button
+            # Check for "I agree" checkbox (Workday terms)
             try:
-                create_btn = page.locator('button:has-text("Create Account"), button:has-text("Sign Up")').first
-                if create_btn.is_visible(timeout=2000):
-                    print("  Clicking 'Create Account'...")
-                    human_delay(1.0, 2.0)
-                    create_btn.click()
-                    time.sleep(random.uniform(6.0, 10.0))  # Account creation takes time
-                    continue
+                checkbox = page.locator('input[type="checkbox"], label:has-text("I agree"), label:has-text("agree")').first
+                if checkbox.is_visible(timeout=1000):
+                    if not checkbox.is_checked():
+                        print("  Checking 'I agree' checkbox...")
+                        checkbox.check()
+                        human_delay()
             except Exception:
                 pass
 
-            # Check for Sign In button (if account already exists)
+            # Prefer Sign In over Create Account (account likely exists from previous attempt)
             try:
-                signin_btn = page.locator('a:has-text("Sign In"), button:has-text("Sign In")').first
-                if signin_btn.is_visible(timeout=2000):
-                    print("  Account may already exist. Clicking 'Sign In'...")
+                signin_link = page.locator('a:has-text("Sign In"), a:has-text("Already have an account")').first
+                if signin_link.is_visible(timeout=1500):
+                    print("  Found 'Sign In' link, clicking (account likely exists)...")
                     human_delay()
-                    signin_btn.click()
+                    signin_link.click()
                     page_load_delay()
+
+                    # Dismiss any modal that appeared
+                    try:
+                        page.keyboard.press("Escape")
+                        page.wait_for_timeout(500)
+                    except Exception:
+                        pass
 
                     # Fill sign-in fields
                     sign_fields = extract_fields(page)
                     for sf in sign_fields:
-                        if "email" in sf["label"].lower():
+                        if "email" in sf["label"].lower() or "email" in sf.get("selector", "").lower():
                             fill_field(page, sf["selector"], PROFILE["email"], sf["type"])
+                            human_typing_delay()
                         elif sf["type"] == "password":
                             fill_field(page, sf["selector"], DEFAULT_PASSWORD, sf["type"])
+                            human_typing_delay()
 
-                    # Click sign in
+                    # Click sign in button
                     try:
                         submit_signin = page.locator('button:has-text("Sign In"), button[type="submit"]').first
                         if submit_signin.is_visible(timeout=2000):
@@ -620,6 +628,18 @@ def main():
                             page_load_delay()
                     except Exception:
                         pass
+                    continue
+            except Exception:
+                pass
+
+            # Fallback: Create Account if no Sign In link found
+            try:
+                create_btn = page.locator('button:has-text("Create Account"), button:has-text("Sign Up")').first
+                if create_btn.is_visible(timeout=1500):
+                    print("  Clicking 'Create Account'...")
+                    human_delay(1.0, 2.0)
+                    create_btn.click()
+                    time.sleep(random.uniform(6.0, 10.0))
                     continue
             except Exception:
                 pass
