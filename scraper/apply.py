@@ -20,10 +20,26 @@ import os
 import time
 import json
 import re
+import random
 import anthropic
 from playwright.sync_api import sync_playwright
 from seleniumbase import sb_cdp
 from dotenv import load_dotenv
+
+
+def human_delay(min_s=0.8, max_s=2.5):
+    """Random delay to mimic human behavior."""
+    time.sleep(random.uniform(min_s, max_s))
+
+
+def human_typing_delay():
+    """Shorter delay between field fills, like a person tabbing between fields."""
+    time.sleep(random.uniform(0.3, 1.2))
+
+
+def page_load_delay():
+    """Longer delay after page navigation or button clicks."""
+    time.sleep(random.uniform(2.5, 5.5))
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
@@ -32,6 +48,8 @@ RESUME_PATH = os.path.join(os.path.dirname(__file__), "..", "resume.pdf")
 
 PROFILE = {
     "full_name": "Stevin George",
+    "first_name": "Stevin",
+    "last_name": "George",
     "email": "steving2006@gmail.com",
     "phone": "407-257-0293",
     "linkedin": "https://linkedin.com/in/georgestevin",
@@ -43,8 +61,13 @@ PROFILE = {
     "gpa": "3.5",
     "work_authorization": "US Citizen",
     "sponsorship_required": "No",
+    "address": "Orlando, FL",
+    "country": "United States",
+    "password": "Stevinismyname14!",
     "skills": "Java, Python, SQL, TypeScript, JavaScript, C, HTML, CSS, Spring Boot, Flask, Next.js, React, React Native, Node.js, Prisma, Tailwind CSS, AWS, Docker, CI/CD, PostgreSQL, Vercel, Git, OpenCV, YOLOv8, TensorFlow Lite, Gemini API, ElevenLabs, ChromaDB, N8N, AI Automations",
 }
+
+DEFAULT_PASSWORD = "Stevinismyname14!"
 
 
 def extract_fields(page):
@@ -53,7 +76,7 @@ def extract_fields(page):
         const fields = [];
         const inputs = document.querySelectorAll(
             'input[type="text"], input[type="email"], input[type="tel"], ' +
-            'input[type="url"], input[type="number"], textarea, select'
+            'input[type="url"], input[type="number"], input[type="password"], textarea, select'
         );
         inputs.forEach((el, i) => {
             if (el.offsetParent === null && el.type !== 'hidden') return;
@@ -186,9 +209,9 @@ def fill_field(page, selector, value, field_type):
 
         el.click()
         el.fill("")
-        page.wait_for_timeout(200)
+        human_typing_delay()
         el.fill(value)
-        page.wait_for_timeout(200)
+        human_typing_delay()
         el.evaluate("el => { el.dispatchEvent(new Event('change', {bubbles: true})); el.dispatchEvent(new Event('blur', {bubbles: true})); }")
         return True
     except Exception as e:
@@ -215,12 +238,28 @@ def main():
 
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(endpoint_url)
-        page = browser.contexts[0].pages[0]
+
+        # Get or create a page
+        if browser.contexts and browser.contexts[0].pages:
+            page = browser.contexts[0].pages[0]
+        else:
+            context = browser.new_context()
+            page = context.new_page()
 
         # Navigate
         print(f"[2/6] Navigating to application page...")
         page.goto(url, wait_until="domcontentloaded")
-        page.wait_for_timeout(4000)
+        page_load_delay()
+
+        # Handle cookie banner
+        try:
+            cookie_btn = page.locator('button:has-text("Accept Cookies"), button:has-text("Accept"), button:has-text("Decline")').first
+            if cookie_btn.is_visible(timeout=2000):
+                human_delay()
+                cookie_btn.click()
+                human_delay()
+        except Exception:
+            pass
 
         # Handle CAPTCHA
         try:
@@ -228,77 +267,204 @@ def main():
         except Exception:
             pass
 
-        page.wait_for_timeout(2000)
-
-        # Extract fields
-        print("[3/6] Scanning form fields...")
-        fields = extract_fields(page)
+        # Extract job description BEFORE clicking Apply (it's on this page)
         job_desc = extract_job_description(page)
-        print(f"  Found {len(fields)} fields")
 
-        if not fields:
-            print("  No fields found, waiting longer...")
-            page.wait_for_timeout(5000)
+        # Click "Apply" button if we're on a job listing page (not already on form)
+        try:
+            apply_btn = page.locator('a:has-text("Apply"), button:has-text("Apply")').first
+            if apply_btn.is_visible(timeout=3000):
+                print("  Found Apply button, clicking...")
+                human_delay(1.0, 3.0)
+                apply_btn.click()
+                page_load_delay()
+
+                # Workday sometimes asks "Sign In" or "Apply Manually" — click the right one
+                try:
+                    manual_btn = page.locator('a:has-text("Apply Manually"), button:has-text("Apply Manually"), a:has-text("Apply with your resume")').first
+                    if manual_btn.is_visible(timeout=3000):
+                        human_delay()
+                        manual_btn.click()
+                        page_load_delay()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        page_load_delay()
+
+        # Workday multi-step handler
+        step = 0
+        max_steps = 8  # Safety limit
+
+        while step < max_steps:
+            step += 1
+            current_url = page.url
+            page_text = page.text_content("body")[:500] if page.locator("body").count() > 0 else ""
+
+            print(f"\n--- Step {step} ---")
+
+            # Take a step screenshot
+            step_screenshot = os.path.join(os.path.dirname(__file__), "..", "screenshots", f"step-{step}.png")
+            os.makedirs(os.path.dirname(step_screenshot), exist_ok=True)
+            page.screenshot(path=step_screenshot)
+
+            # Extract fields on current page
             fields = extract_fields(page)
-            print(f"  Retry: found {len(fields)} fields")
+            print(f"  Found {len(fields)} fields")
 
-        # Ask Claude
-        if fields:
-            print("[4/6] Asking Claude for field values...")
-            answers = ask_claude(fields, job_desc, url)
-            print(f"  Got {len(answers)} answers")
+            if not fields:
+                page_load_delay()
+                fields = extract_fields(page)
+                print(f"  Retry: {len(fields)} fields")
 
-            # Fill fields
-            print("[5/6] Filling form fields...")
-            filled = 0
-            for answer in answers:
-                idx = answer.get("index", -1)
-                value = answer.get("value", "")
-                if idx < 0 or idx >= len(fields) or not value:
+            if not fields:
+                print("  No fields on this page. Checking for navigation...")
+                # Check if there's a "Next" or "Continue" or "Save and Continue" button
+                next_btn = page.locator('button:has-text("Next"), button:has-text("Continue"), button:has-text("Save and Continue"), button:has-text("Submit")').first
+                if next_btn.is_visible(timeout=2000):
+                    btn_text = next_btn.text_content().strip()
+                    if "submit" in btn_text.lower():
+                        print(f"  Found Submit button. STOPPING — review and submit manually.")
+                        break
+                    print(f"  Clicking '{btn_text}'...")
+                    human_delay(0.5, 1.5)
+                    next_btn.click()
+                    page_load_delay()
                     continue
-
-                field = fields[idx]
-                label = field["label"][:40]
-                if fill_field(page, field["selector"], value, field["type"]):
-                    print(f"  Filled: {label} = {value[:50]}")
-                    filled += 1
                 else:
-                    print(f"  FAILED: {label}")
-                page.wait_for_timeout(400)
+                    print("  No fields and no navigation button. Done.")
+                    break
 
-            print(f"\n  Filled {filled}/{len(answers)} fields")
-        else:
-            print("[4/6] No fields to fill")
+            # Handle password fields directly (don't send to Claude)
+            password_fields = [f for f in fields if f["type"] == "password"]
+            regular_fields = [f for f in fields if f["type"] != "password"]
 
-        # Upload resume
-        print("[6/6] Uploading resume...")
-        if os.path.exists(RESUME_PATH):
+            for pf in password_fields:
+                fill_field(page, pf["selector"], DEFAULT_PASSWORD, "password")
+                human_typing_delay()
+                print(f"  Filled password: {pf['label'][:30]}")
+
+            # Ask Claude for remaining fields
+            if regular_fields:
+                print(f"  Asking Claude for {len(regular_fields)} fields...")
+                answers = ask_claude(regular_fields, job_desc, url)
+                print(f"  Got {len(answers)} answers")
+
+                filled = 0
+                for answer in answers:
+                    idx = answer.get("index", -1)
+                    value = answer.get("value", "")
+                    if idx < 0 or not value:
+                        continue
+
+                    # Find the matching field
+                    field = None
+                    for f in regular_fields:
+                        if f["index"] == idx:
+                            field = f
+                            break
+                    if not field:
+                        continue
+
+                    label = field["label"][:40]
+                    if fill_field(page, field["selector"], value, field["type"]):
+                        print(f"  Filled: {label} = {value[:50]}")
+                        filled += 1
+                    else:
+                        print(f"  FAILED: {label}")
+                    human_typing_delay()
+
+                print(f"  Filled {filled}/{len(answers)} fields this step")
+
+            # Try to upload resume if there's a file input
+            if os.path.exists(RESUME_PATH):
+                try:
+                    file_input = page.locator('input[type="file"]').first
+                    if file_input.count() > 0:
+                        file_input.set_input_files(RESUME_PATH)
+                        page_load_delay()
+                        print("  Resume uploaded!")
+                except Exception:
+                    pass
+
+            # Look for "Next" / "Continue" / "Save and Continue" button to advance
+            human_delay(1.0, 2.5)
             try:
-                file_input = page.locator('input[type="file"]').first
-                if file_input.count() > 0:
-                    file_input.set_input_files(RESUME_PATH)
-                    page.wait_for_timeout(2000)
-                    print("  Resume uploaded!")
-                else:
-                    print("  No file upload field found")
-            except Exception as e:
-                print(f"  Upload failed: {e}")
-        else:
-            print(f"  No resume.pdf found at {RESUME_PATH}")
+                next_btn = page.locator('button:has-text("Next"), button:has-text("Continue"), button:has-text("Save and Continue")').first
+                if next_btn.is_visible(timeout=2000):
+                    btn_text = next_btn.text_content().strip()
+                    print(f"  Clicking '{btn_text}' to advance...")
+                    human_delay(0.5, 1.5)
+                    next_btn.click()
+                    page_load_delay()
+                    continue
+            except Exception:
+                pass
 
-        # Screenshot
-        screenshot_path = os.path.join(os.path.dirname(__file__), "..", "screenshots", "quick-apply.png")
-        os.makedirs(os.path.dirname(screenshot_path), exist_ok=True)
-        page.screenshot(path=screenshot_path, full_page=True)
-        print(f"\n  Screenshot: {screenshot_path}")
+            # Check for Create Account button
+            try:
+                create_btn = page.locator('button:has-text("Create Account"), button:has-text("Sign Up")').first
+                if create_btn.is_visible(timeout=2000):
+                    print("  Clicking 'Create Account'...")
+                    human_delay(1.0, 2.0)
+                    create_btn.click()
+                    time.sleep(random.uniform(6.0, 10.0))  # Account creation takes time
+                    continue
+            except Exception:
+                pass
+
+            # Check for Sign In button (if account already exists)
+            try:
+                signin_btn = page.locator('a:has-text("Sign In"), button:has-text("Sign In")').first
+                if signin_btn.is_visible(timeout=2000):
+                    print("  Account may already exist. Clicking 'Sign In'...")
+                    human_delay()
+                    signin_btn.click()
+                    page_load_delay()
+
+                    # Fill sign-in fields
+                    sign_fields = extract_fields(page)
+                    for sf in sign_fields:
+                        if "email" in sf["label"].lower():
+                            fill_field(page, sf["selector"], PROFILE["email"], sf["type"])
+                        elif sf["type"] == "password":
+                            fill_field(page, sf["selector"], DEFAULT_PASSWORD, sf["type"])
+
+                    # Click sign in
+                    try:
+                        submit_signin = page.locator('button:has-text("Sign In"), button[type="submit"]').first
+                        if submit_signin.is_visible(timeout=2000):
+                            human_delay()
+                            submit_signin.click()
+                            page_load_delay()
+                    except Exception:
+                        pass
+                    continue
+            except Exception:
+                pass
+
+            # No next button found — we're either done or stuck
+            print("  No next/continue button. Taking final screenshot.")
+            break
+
+        # Final screenshot
+        final_screenshot = os.path.join(os.path.dirname(__file__), "..", "screenshots", "quick-apply-final.png")
+        page.screenshot(path=final_screenshot, full_page=True)
+        print(f"\n  Final screenshot: {final_screenshot}")
 
         print(f"\n{'='*60}")
         print("DONE! Browser is still open.")
         print("Review the filled fields, then submit manually.")
-        print("Press Enter here to close the browser.")
         print(f"{'='*60}\n")
 
-        input()  # Wait for user to press Enter
+        # Keep browser open — wait for user input or timeout
+        try:
+            input("Press Enter to close the browser...")
+        except EOFError:
+            # Running non-interactively, keep open for 120 seconds
+            print("Non-interactive mode. Browser stays open for 120 seconds.")
+            time.sleep(120)
 
     sb.driver.stop()
 
