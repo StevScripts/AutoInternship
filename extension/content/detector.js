@@ -9,13 +9,35 @@
   function detectPlatform() {
     const url = window.location.href;
     if (url.includes("myworkdayjobs.com")) return "workday";
-    if (url.includes("greenhouse.io")) return "greenhouse";
+    if (url.includes("greenhouse.io") || url.includes("boards.greenhouse")) return "greenhouse";
     if (url.includes("lever.co")) return "lever";
     if (url.includes("ashbyhq.com")) return "ashby";
     if (url.includes("joinhandshake.com")) return "handshake";
     if (url.includes("smartrecruiters.com")) return "smartrecruiters";
     if (url.includes("icims.com")) return "icims";
-    return "unknown";
+    if (url.includes("eightfold.ai")) return "eightfold";
+    if (url.includes("jobvite.com")) return "jobvite";
+    if (url.includes("taleo.net")) return "taleo";
+    if (url.includes("bamboohr.com")) return "bamboohr";
+    if (url.includes("workable.com")) return "workable";
+    if (url.includes("indeed.com/viewjob") || url.includes("indeed.com/applystart")) return "indeed";
+    return "generic";
+  }
+
+  // Check if page looks like a job application
+  function isJobRelatedPage() {
+    const url = window.location.href.toLowerCase();
+    const jobKeywords = [
+      "apply", "career", "job", "hiring", "recruit", "talent",
+      "workday", "greenhouse", "lever", "ashby", "eightfold",
+      "application", "intern", "position", "opening"
+    ];
+    if (jobKeywords.some(kw => url.includes(kw))) return true;
+
+    // Check page content
+    const bodyText = (document.title + " " + document.body?.innerText?.substring(0, 2000) || "").toLowerCase();
+    const contentKeywords = ["apply now", "submit application", "upload resume", "cover letter", "work authorization"];
+    return contentKeywords.some(kw => bodyText.includes(kw));
   }
 
   // Extract visible form fields from the page
@@ -294,22 +316,30 @@
 
   // Watch for page changes (SPAs like Workday)
   const observer = new MutationObserver(() => {
-    // Check if we're on an application page
+    if (overlayInjected) return;
+
     const hasForm =
       document.querySelector("form") ||
       document.querySelector('[data-automation-id="applyButton"]') ||
-      document.querySelector('input[type="text"]');
+      document.querySelector('input[type="text"]') ||
+      document.querySelector('input[type="email"]') ||
+      document.querySelector("textarea");
 
-    if (hasForm && !overlayInjected) {
+    if (hasForm && isJobRelatedPage()) {
       injectOverlay();
     }
   });
 
   // Start observing
-  observer.observe(document.body, { childList: true, subtree: true });
+  if (document.body) {
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
 
-  // Also try immediately
+  // Also try immediately and after a delay (for SPAs that load slowly)
   setTimeout(() => {
-    if (!overlayInjected) injectOverlay();
+    if (!overlayInjected && isJobRelatedPage()) injectOverlay();
   }, 2000);
+  setTimeout(() => {
+    if (!overlayInjected && isJobRelatedPage()) injectOverlay();
+  }, 5000);
 })();

@@ -5,7 +5,8 @@ fills form fields using AI-generated autofill data, uploads resume,
 and takes a screenshot as proof. Does NOT click submit — waits for
 manual confirmation or a second approval step.
 
-Supports: Workday, Greenhouse, Lever, Ashby, Handshake, generic forms.
+Supports: ANY job application site — Workday, Greenhouse, Lever, Ashby,
+Eightfold, Handshake, SmartRecruiters, iCIMS, Jobvite, Taleo, and generic forms.
 """
 
 import os
@@ -33,6 +34,16 @@ def detect_platform(url: str) -> str:
         return "smartrecruiters"
     if "icims.com" in url:
         return "icims"
+    if "eightfold.ai" in url:
+        return "eightfold"
+    if "jobvite.com" in url:
+        return "jobvite"
+    if "taleo.net" in url:
+        return "taleo"
+    if "bamboohr.com" in url:
+        return "bamboohr"
+    if "workable.com" in url:
+        return "workable"
     return "generic"
 
 

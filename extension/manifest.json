@@ -6,30 +6,15 @@
   "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://api.anthropic.com/*",
-    "https://*.myworkdayjobs.com/*",
-    "https://boards.greenhouse.io/*",
-    "https://jobs.lever.co/*",
-    "https://*.lever.co/*",
-    "https://*.ashbyhq.com/*",
-    "https://app.joinhandshake.com/*",
-    "https://*.smartrecruiters.com/*",
-    "https://*.icims.com/*"
+    "https://*/*",
+    "http://*/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://*.myworkdayjobs.com/*",
-        "https://boards.greenhouse.io/*",
-        "https://jobs.lever.co/*",
-        "https://*.lever.co/*",
-        "https://*.ashbyhq.com/*",
-        "https://app.joinhandshake.com/*",
-        "https://*.smartrecruiters.com/*",
-        "https://*.icims.com/*"
-      ],
+      "matches": ["https://*/*", "http://*/*"],
       "js": ["content/detector.js"],
       "css": ["content/overlay.css"],
       "run_at": "document_idle"
