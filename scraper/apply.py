@@ -375,6 +375,25 @@ def main():
                     pass
 
             if not fields:
+                # Check for sign-in/sign-up options (Eightfold, Workday, etc.)
+                try:
+                    email_signin = page.locator(
+                        'button:has-text("Sign in with email"), a:has-text("Sign in with email"), '
+                        'button:has-text("Sign up with email"), a:has-text("Sign up with email"), '
+                        'button:has-text("Continue with email"), a:has-text("Continue with email"), '
+                        'button:has-text("Create Account"), a:has-text("Create Account")'
+                    ).first
+                    if email_signin.is_visible(timeout=2000):
+                        print(f"  Found '{email_signin.text_content().strip()}', clicking...")
+                        human_delay()
+                        email_signin.click()
+                        page_load_delay()
+                        fields = extract_fields(page)
+                        print(f"  After sign-in click: {len(fields)} fields")
+                except Exception:
+                    pass
+
+            if not fields:
                 print("  No fields on this page. Checking for navigation...")
                 # Check if there's a "Next" or "Continue" or "Save and Continue" button
                 next_btn = page.locator('button:has-text("Next"), button:has-text("Continue"), button:has-text("Save and Continue"), button:has-text("Submit")').first
